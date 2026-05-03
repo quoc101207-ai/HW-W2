@@ -1,0 +1,62 @@
+#Bài 2.13: Kế hoạch chiến lược bán hàng của Shopee dành cho các cửa hàng
+import skfuzzy as fuzz
+from skfuzzy import control as ctrl
+import numpy as np
+
+demand=ctrl.Antecedent(np.arange(0,100.1,0.1),'demand')
+competitor_pressure=ctrl.Antecedent(np.arange(0,100.1,0.1),'competitor_pressure')
+reputation=ctrl.Antecedent(np.arange(0,5.1,0.1),'reputation')
+profit_margin=ctrl.Antecedent(np.arange(0,100.1,0.1),'profit_margin')
+seasonal_demand=ctrl.Antecedent(np.arange(0,100.1,0.1),'seasonal_demand')
+discount_percentage=ctrl.Consequent(np.arange(0,100.1,0.1),'discount_percentage')
+
+demand['low']=fuzz.trimf(demand.universe,[0,0,30])
+demand['med']=fuzz.trimf(demand.universe,[20,45,70])
+demand['high']=fuzz.trimf(demand.universe,[60,100,100])
+demand.view()
+
+competitor_pressure['low']=fuzz.trimf(competitor_pressure.universe,[0,0,30])
+competitor_pressure['med']=fuzz.trimf(competitor_pressure.universe,[20,45,70])
+competitor_pressure['high']=fuzz.trimf(competitor_pressure.universe,[60,100,100])
+competitor_pressure.view()
+
+reputation['low']=fuzz.trimf(reputation.universe,[1,1,4])
+reputation['med']=fuzz.trimf(reputation.universe,[4,4.25,4.5])
+reputation['high']=fuzz.trimf(reputation.universe,[4.5,5,5])
+reputation.view()
+
+profit_margin['low']=fuzz.trimf(profit_margin.universe,[0,0,30])
+profit_margin['med']=fuzz.trimf(profit_margin.universe,[20,40,60])
+profit_margin['high']=fuzz.trimf(profit_margin.universe,[50,100,100])
+profit_margin.view()
+
+seasonal_demand['low']=fuzz.trimf(seasonal_demand.universe,[0,0,30])
+seasonal_demand['med']=fuzz.trimf(seasonal_demand.universe,[20,40,60])
+seasonal_demand['high']=fuzz.trimf(seasonal_demand.universe,[50,100,100])
+seasonal_demand.view()
+
+discount_percentage['very low']=fuzz.trimf(discount_percentage.universe,[0,0,5])
+discount_percentage['low']=fuzz.trimf(discount_percentage.universe,[5,7.5,10])
+discount_percentage['med']=fuzz.trimf(discount_percentage.universe,[10,15,20])
+discount_percentage['high']=fuzz.trimf(discount_percentage.universe,[20,30,40])
+discount_percentage['very high']=fuzz.trimf(discount_percentage.universe,[40,55,70])
+discount_percentage.view()
+
+r01=ctrl.Rule(demand['high']&competitor_pressure['low']&profit_margin['low'],discount_percentage['very low'])
+r02=ctrl.Rule(demand['low']&competitor_pressure['high']&profit_margin['high'],discount_percentage['high'])
+r03=ctrl.Rule(reputation['high']&profit_margin['med']&seasonal_demand['high'],discount_percentage['med'])
+r04=ctrl.Rule(competitor_pressure['high']&seasonal_demand['high']&profit_margin['high'],discount_percentage['very high'])
+r05=ctrl.Rule(reputation['low']&demand['med']&profit_margin['low'],discount_percentage['med'])
+r06=ctrl.Rule(demand['high']&seasonal_demand['low']&competitor_pressure['low'],discount_percentage['very low'])
+r07=ctrl.Rule(profit_margin['high']&competitor_pressure['med']&demand['med'],discount_percentage['med'])
+
+disper_ctrl=ctrl.ControlSystem([r01,r02,r03,r04,r05,r06,r07])
+disper=ctrl.ControlSystemSimulation(disper_ctrl)
+disper.input['demand']='med'
+disper.input['competitor_pressure']='med'
+disper.input['reputation']=4.2
+disper.input['profit_margin']='high'
+disper.input['seasonal_demand']='high'
+disper.compute()
+print('Discount percentage: ',disper.output['discount_percentage'],"%")
+discount_percentage.view(sim=disper)
