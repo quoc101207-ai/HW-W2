@@ -32,7 +32,7 @@ event.view()
 
 competitor_discounts['low']=fuzz.trimf(competitor_discounts.universe,[0,0,30])
 competitor_discounts['med']=fuzz.trimf(competitor_discounts.universe,[20,40,60])
-competitor_discounts['high']=fuzz.trimf(competitor_discounts.universe,[50,100,100])
+competitor_discounts['high']=fuzz.trimf(competitor_discounts.universe,[50,70,70])
 competitor_discounts.view()
 
 discount_percentage['very low']=fuzz.trimf(discount_percentage.universe,[0,0,5])
