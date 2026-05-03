@@ -1,0 +1,35 @@
+#Bài 2.12: Chiến lược chiết khấu cho khách hàng ở các cửa hàng Shopee
+import skfuzzy as fuzz
+from skfuzzy import control as ctrl
+
+rating=ctrl.Antecedent(np.arange(1,5.1,0.1),'rating')
+sale_volume=ctrl.Antecedent(['low','med','high'],'sale_volume')
+profit_margin=ctrl.Antecedent(['low','med','high'],'profit_margin')
+event=ctrl.Antecedent(['low','med','high'],'event')
+competitor_discounts=ctrl.Antecedent(['low','med','high'],'competitor_discounts')
+discount_percentage=ctrl.Consequent(np.arange(0,100.1,0.1),'discount_percentage')
+
+discount_percentage['very low']=fuzz.trimf(discount_percentage.universe,[0,0,5])
+discount_percentage['low']=fuzz.trimf(discount_percentage.universe,[5,7.5,10])
+discount_percentage['med']=fuzz.trimf(discount_percentage.universe,[10,15,20])
+discount_percentage['high']=fuzz.trimf(discount_percentage.universe,[20,30,40])
+discount_percentage['very high']=fuzz.trimf(discount_percentage.universe,[40,55,70])
+discount_percentage.view()
+
+r01=ctrl.Rule(rating['high']&sale_volume['high']&profit_margin['high'],discount_percentage['low'])
+r02=ctrl.Rule(rating['low']&sale_volume['low']&profit_margin['high'],discount_percentage['high'])
+r03=ctrl.Rule(event['high']&competitor_discounts['high'],discount_percentage['very high'])
+r04=ctrl.Rule(rating['med']&sale_volume['med']&profit_margin['med'],discount_percentage['med'])
+r05=ctrl.Rule(competitor_discounts['low']&profit_margin['low']&sale_volume['high'],discount_percentage['very low'])
+r06=ctrl.Rule(rating['low']&event['low'],discount_percentage['med'])
+r07=ctrl.Rule(sale_volume['low']&profit_margin['low'],discount_percentage['very high'])
+
+disper_ctrl=ctrl.ControlSystem([r01,r02,r03,r04,r05,r06,r07])
+disper=ctrl.ControlSystemSimulation(disper_ctrl)
+disper.input['rating']=4.3
+disper.input['sale_volume']='med'
+disper.input['profit_margin']='low'
+disper.input['event']='high'
+disper.input['competitor_discounts']='high'
+disper.compute()
+print(disper.output['discount_percentage'])
