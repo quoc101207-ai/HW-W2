@@ -1,0 +1,104 @@
+# Bài 2.11: Hệ thống giá tiền Grab-bike
+import skfuzzy as fuzz
+from skfuzzy import control as ctrl
+import numpy as np
+
+dist=ctrl.Antecedent(np.arange(0,50.1,0.1),'dist')
+traf=ctrl.Antecedent(np.arange(0,100.1,0.1),'traf')
+dema=ctrl.Antecedent(np.arange(0,100.1,0.1),'dema')
+wthr=ctrl.Antecedent(np.arange(0,100.1,0.1),'wthr')
+ratg=ctrl.Antecedent(np.arange(1,5.1,0.1),'ratg')
+punc=ctrl.Antecedent(np.arange(0,100.1,0.1),'punc')
+price=ctrl.Consequent(np.arange(0,50.1,0.1),'price')
+point=ctrl.Consequent(np.arange(0,10.1,0.1),'point')
+
+# distance
+dist['short']=fuzz.trimf(dist.universe,[0,0,3])
+dist['medium']=fuzz.trimf(dist.universe,[2,4,6])
+dist['long']=fuzz.trimf(dist.universe,[6,13,20])
+dist['very long']=fuzz.trimf(dist.universe,[15,50,50])
+dist.view()
+# traffic
+traf['low']=fuzz.trimf(traf.universe,[0,0,30])
+traf['medium']=fuzz.trimf(traf.universe,[20,45,70])
+traf['high']=fuzz.trimf(traf.universe,[60,100,100])
+traf.view()
+# demand
+dema['low']=fuzz.trimf(dema.universe,[0,0,30])
+dema['medium']=fuzz.trimf(dema.universe,[20,45,70])
+dema['high']=fuzz.trimf(dema.universe,[60,100,100])
+dema.view()
+# weather
+wthr['good']=fuzz.trimf(wthr.universe,[0,0,30])
+wthr['moderate']=fuzz.trimf(wthr.universe,[20,35,50])
+wthr['bad']=fuzz.trimf(wthr.universe,[40,100,100])
+wthr.view()
+# rating
+ratg['poor']=fuzz.trimf(ratg.universe,[1,1,2.5])
+ratg['average']=fuzz.trimf(ratg.universe,[2,3,4])
+ratg['good']=fuzz.trimf(ratg.universe,[3.5,5,5])
+ratg.view()
+# punctuality
+punc['late']=fuzz.trimf(punc.universe,[0,0,50])
+punc['on time']=fuzz.trimf(punc.universe,[40,60,80])
+punc['early']=fuzz.trimf(punc.universe,[70,100,100])
+punc.view()
+#price
+price['low']=fuzz.trimf(price.universe,[10,10,20])
+price['medium']=fuzz.trimf(price.universe,[15,20,25])
+price['high']=fuzz.trimf(price.universe,[20,30,40])
+price['very high']=fuzz.trimf(price.universe,[30,50,50])
+price.view()
+# point
+point['none']=fuzz.trimf(point.universe,[0,0,0])
+point['low']=fuzz.trimf(point.universe,[0,2,4])
+point['medium']=fuzz.trimf(point.universe,[2,4,6])
+point['high']=fuzz.trimf(point.universe,[4,10,10])
+point.view()
+
+# rule for price
+r1=ctrl.Rule(dist['short']&traf['low']&dema['low'],price['low'])
+r2=ctrl.Rule(dist['short']&traf['medium']&dema['high'],price['medium'])
+r3=ctrl.Rule(dist['medium']&traf['high']&dema['high'],price['high'])
+r4=ctrl.Rule(dist['long']&traf['medium']&wthr['good'],price['medium'])
+r5=ctrl.Rule(dist['long']&traf['high']&wthr['bad'],price['very high'])
+r6=ctrl.Rule(dist['very long']&traf['high']&dema['high'],price['very high'])
+r7=ctrl.Rule(dist['medium']&traf['low']&dema['low'],price['medium'])
+r8=ctrl.Rule(dist['short']&traf['high']&wthr['bad'],price['high'])
+r9=ctrl.Rule(dist['very long']&wthr['bad'],price['very high'])
+r10=ctrl.Rule(dist['very long']&traf['medium']&wthr['moderate'],price['medium'])
+
+# rule for point
+r11=ctrl.Rule(ratg['good']&punc['early'],point['high'])
+r12=ctrl.Rule(ratg['average']&punc['on time'],point['medium'])
+r13=ctrl.Rule(ratg['poor']&punc['late'],point['none'])
+r14=ctrl.Rule(dist['long']&traf['high']&punc['on time'],point['high'])
+r15=ctrl.Rule(dist['medium']&traf['medium']&ratg['good'],point['medium'])
+r16=ctrl.Rule(ratg['poor']&punc['late'],point['none'])
+r17=ctrl.Rule(dist['very long']&wthr['bad']&ratg['good'],point['high'])
+r18=ctrl.Rule(dist['short']&ratg['average']&punc['on time'],point['low'])
+r19=ctrl.Rule(dist['long']&traf['high']&punc['late'],point['low'])
+r20=ctrl.Rule(dist['medium']&wthr['moderate']&ratg['good'],point['medium'])
+
+# final price
+price_ctrl=ctrl.ControlSystem([r1,r2,r3,r4,r5,r6,r7,r8,r9,r10])
+fprice=ctrl.ControlSystemSimulation(price_ctrl)
+fprice.input['dist']=16
+fprice.input['traf']=67
+fprice.input['dema']=38
+fprice.input['wthr']=89
+fprice.compute()
+print(fprice.output['price'])
+price.view(sim=fprice)
+
+# final point
+point_ctrl=ctrl.ControlSystem([r11,r12,r13,r14,r15,r16,r17,r18,r19,r20])
+fpoint=ctrl.ControlSystemSimulation(point_ctrl)
+fpoint.input['ratg']=4
+fpoint.input['punc']=89
+fpoint.input['dist']=34
+fpoint.input['traf']=67
+fpoint.input['wthr']=89
+fpoint.compute()
+print(fpoint.output['point'])
+point.view(sim=fpoint)
