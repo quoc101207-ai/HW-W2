@@ -1,0 +1,76 @@
+#Bài 2.14: Tối ưu hóa thời gian giao hàng và tăng thu nhập
+import skfuzzy as fuzz
+from skfuzzy import control as ctrl
+import numpy as np
+
+density=ctrl.Antecedent(np.arange(0,100.1,0.1),'density')
+urgency=ctrl.Antecedent(np.arange(0,100.1,0.1),'urgency')
+current_load=ctrl.Antecedent(np.arange(0,11,1),'current_load')
+traffic=ctrl.Antecedent(np.arange(0,100.1,0.1),'traffic')
+profit=ctrl.Antecedent(np.arange(0,100.1,0.1),'profit')
+number_to_combine=ctrl.Consequent(np.arange(0,11,1),'number_to_combine')
+priority=ctrl.Consequent(np.arange(0,100.1,0.1),'priority')
+
+density['low']=fuzz.trimf(density.universe,[0,0,40])
+density['med']=fuzz.trimf(density.universe,[30,50,70])
+density['high']=fuzz.trimf(density.universe,[60,100,100])
+density.view()
+
+urgency['low']=fuzz.trimf(urgency.universe,[0,0,40])
+urgency['med']=fuzz.trimf(urgency.universe,[30,50,70])
+urgency['high']=fuzz.trimf(urgency.universe,[60,100,100])
+urgency.view()
+
+current_load['low']=fuzz.trimf(current_load.universe,[0,0,4])
+current_load['med']=fuzz.trimf(current_load.universe,[3,5,7])
+current_load['high']=fuzz.trimf(current_load.universe,[6,10,10])
+current_load.view()
+
+traffic['low']=fuzz.trimf(traffic.universe,[0,0,40])
+traffic['med']=fuzz.trimf(traffic.universe,[30,50,70])
+traffic['high']=fuzz.trimf(traffic.universe,[60,100,100])
+traffic.view()
+
+profit['low']=fuzz.trimf(profit.universe,[0,0,40])
+profit['med']=fuzz.trimf(profit.universe,[30,50,70])
+profit['high']=fuzz.trimf(profit.universe,[60,100,100])
+profit.view()
+
+number_to_combine['few']=fuzz.trimf(number_to_combine.universe,[0,0,4])
+number_to_combine['some']=fuzz.trimf(number_to_combine.universe,[3,5,7])
+number_to_combine['many']=fuzz.trimf(number_to_combine.universe,[6,10,10])
+number_to_combine.view()
+
+priority['low']=fuzz.trimf(priority.universe,[0,0,40])
+priority['med']=fuzz.trimf(priority.universe,[30,50,70])
+priority['high']=fuzz.trimf(priority.universe,[60,100,100])
+priority.view()
+
+r1=ctrl.Rule(density['high']&current_load['low']&traffic['low'],number_to_combine['many'])
+r2=ctrl.Rule(density['med']&traffic['high']&urgency['med'],number_to_combine['some'])
+r3=ctrl.Rule(current_load['high']&density['high']&profit['med'],number_to_combine['some'])
+r4=ctrl.Rule(density['low']&urgency['high']&traffic['med'],number_to_combine['some'])
+r5=ctrl.Rule(profit['high']&urgency['high']&traffic['high'],number_to_combine['some'])
+
+r6=ctrl.Rule(urgency['high']&profit['high'],priority['high'])
+r7=ctrl.Rule(urgency['med']&traffic['med'],priority['med'])
+r8=ctrl.Rule(urgency['low']&density['high']&profit['low'],priority['low'])
+
+number_to_combine_ctrl=ctrl.ControlSystem([r1,r2,r3,r4,r5])
+fnumber_to_combine=ctrl.ControlSystemSimulation(number_to_combine_ctrl)
+fnumber_to_combine.input['density']='high'
+fnumber_to_combine.input['urgency']='med'
+fnumber_to_combine.input['current_load']='low'
+fnumber_to_combine.input['traffic']='low'
+fnumber_to_combine.input['profit']='med'
+fnumber_to_combine.compute()
+print('Number of orders to combine: ',round(fnumber_to_combine.output['number_to_combine']))
+number_to_combine.view(sim=fnumber_to_combine)
+
+priority_ctrl=ctrl.ControlSystem([r6,r7,r8])
+fpriority=ctrl.ControlSystemSimulation(priority_ctrl)
+fpriority.input['urgency']='low'
+fpriority.input['profit']='low'
+fpriority.compute()
+print('Priority: ',round(fpriority.output['priority']),'/100')
+priority.view(sim=fpriority)
